@@ -112,4 +112,4 @@ perigoso. Por isso o `ExecutorSeguro` valida a expressão antes de rodar: ele an
 
 ## Próximo passo
 
-Rode você mesmo, do zero, seguindo [`03-reproduzir-do-zero.md`](03-reproduzir-do-zero.md).
+[`03-reproduzir-do-zero.md`](03-reproduzir-do-zero.md).
