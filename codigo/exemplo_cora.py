@@ -10,9 +10,13 @@ classifique mostrando o raciocínio passo a passo, e ao final reporta a acuráci
 
 Como rodar:
 
-    # Com uma API compatível com OpenAI:
+    # Provedor padrão do projeto (OpenRouter). Defina a chave antes:
+    export OPENROUTER_API_KEY=...
+    python exemplo_cora.py --n 5 --modelo openai/o4-mini
+
+    # Com a API da própria OpenAI:
     export OPENAI_API_KEY=sk-...
-    python exemplo_cora.py --n 5 --modelo o4-mini
+    python exemplo_cora.py --n 5 --provedor openai --modelo o4-mini
 
     # Com um modelo local via Ollama (sem custo):
     python exemplo_cora.py --n 5 --provedor ollama --modelo qwen2.5:14b
@@ -37,6 +41,7 @@ from graph_as_code import (
     ClienteLLM,
     criar_cliente_ollama,
     criar_cliente_openai,
+    criar_cliente_openrouter,
 )
 
 PASTA_DADOS = Path(__file__).resolve().parent / "dados-exemplo"
@@ -80,6 +85,8 @@ def sortear_nos_de_teste(df: pd.DataFrame, quantidade: int, seed: int) -> list[i
 
 def criar_cliente(provedor: str, modelo: str) -> ClienteLLM:
     """Cria o cliente de LLM conforme o provedor escolhido."""
+    if provedor == "openrouter":
+        return criar_cliente_openrouter(modelo)
     if provedor == "openai":
         return criar_cliente_openai(modelo)
     if provedor == "ollama":
@@ -129,8 +136,11 @@ def analisar_argumentos() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Demonstração do Graph-as-Code no Cora")
     parser.add_argument("--n", type=int, default=5, help="quantos nós classificar")
     parser.add_argument("--seed", type=int, default=42, help="semente do sorteio")
-    parser.add_argument("--provedor", choices=["openai", "ollama"], default="openai")
-    parser.add_argument("--modelo", default="o4-mini", help="ex.: o4-mini, qwen2.5:14b")
+    parser.add_argument("--provedor", choices=["openrouter", "openai", "ollama"],
+                        default="openrouter")
+    parser.add_argument("--modelo", default="openai/o4-mini",
+                        help="ex.: openai/o4-mini (openrouter), o4-mini (openai), "
+                             "qwen2.5:14b (ollama)")
     parser.add_argument("--max-passos", type=int, default=15)
     parser.add_argument("--silencioso", action="store_true",
                         help="não mostra o raciocínio passo a passo")

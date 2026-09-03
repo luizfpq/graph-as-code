@@ -535,8 +535,39 @@ def _decorrido(inicio: float) -> float:
 # ===========================================================================
 # 5. CLIENTES DE LLM
 # ===========================================================================
-# Dois provedores, a mesma assinatura (o Protocol ClienteLLM). Troque de um para
-# o outro sem mexer no método.
+# Três fábricas de cliente, a mesma assinatura (o Protocol ClienteLLM). Troque de
+# uma para outra sem mexer no método. O OpenRouter é o provedor usado por padrão
+# neste projeto: é uma API compatível com OpenAI que dá acesso a vários modelos
+# (o4-mini, DeepSeek, Qwen, Llama...) com uma única chave.
+
+
+def criar_cliente_openrouter(
+    modelo: str = "openai/o4-mini",
+    *,
+    api_key: str | None = None,
+    base_url: str = "https://openrouter.ai/api/v1",
+) -> ClienteLLM:
+    """Cria um cliente para o OpenRouter (provedor padrão do projeto).
+
+    O OpenRouter expõe uma API compatível com a da OpenAI, então por baixo
+    reaproveitamos :func:`criar_cliente_openai` apenas trocando a chave e a URL
+    base. Os nomes de modelo no OpenRouter levam o prefixo do provedor de origem,
+    por exemplo ``"openai/o4-mini"`` ou ``"deepseek/deepseek-chat"``.
+
+    Args:
+        modelo: Nome do modelo no OpenRouter (ex.: ``"openai/o4-mini"``).
+        api_key: Chave de API. Se ``None``, usa a variável ``OPENROUTER_API_KEY``.
+        base_url: URL base do OpenRouter (raramente precisa mudar).
+
+    Returns:
+        Uma função :class:`ClienteLLM` pronta para uso.
+    """
+    return criar_cliente_openai(
+        modelo,
+        api_key=api_key or os.environ["OPENROUTER_API_KEY"],
+        base_url=base_url,
+        _origem="openrouter",
+    )
 
 
 def criar_cliente_openai(
@@ -544,10 +575,13 @@ def criar_cliente_openai(
     *,
     api_key: str | None = None,
     base_url: str | None = None,
+    _origem: str = "openai",
 ) -> ClienteLLM:
     """Cria um cliente para a API da OpenAI ou qualquer API compatível.
 
-    Serve para OpenAI, OpenRouter, Maritaca e afins, bastando ajustar ``base_url``.
+    É a base usada por :func:`criar_cliente_openrouter`. Use esta função diretamente
+    quando tiver uma chave da própria OpenAI; para o OpenRouter (o padrão do projeto),
+    prefira :func:`criar_cliente_openrouter`.
 
     Args:
         modelo: Nome do modelo (ex.: ``"o4-mini"``).
@@ -569,7 +603,7 @@ def criar_cliente_openai(
                 model=modelo, messages=mensagens, temperature=temperatura, seed=seed
             )
         except Exception as erro:  # noqa: BLE001 - falha de rede não deve derrubar o laço
-            _avisar_erro("openai", erro)
+            _avisar_erro(_origem, erro)
             return None, Uso()
 
         texto = resposta.choices[0].message.content or ""

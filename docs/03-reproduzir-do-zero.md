@@ -7,8 +7,9 @@
 ## O que você vai precisar
 
 - Python 3.10 ou mais novo.
-- Uma de duas formas de acesso a um LLM:
-  - uma chave de API compatível com OpenAI (paga), ou
+- Uma forma de acesso a um LLM:
+  - uma chave do **OpenRouter** (provedor padrão do projeto), ou
+  - uma chave da própria OpenAI, ou
   - o Ollama instalado, para rodar um modelo local de graça.
 
 ---
@@ -28,18 +29,29 @@ pip install -r requirements.txt
 
 ## Passo 2: escolher como acessar o LLM
 
-### Opção A: API compatível com OpenAI
+### Opção A: OpenRouter (padrão do projeto)
 
-Defina a chave no ambiente:
+O OpenRouter é uma API compatível com a da OpenAI que dá acesso a vários modelos com
+uma única chave. Crie a chave em https://openrouter.ai e defina no ambiente:
+
+```bash
+export OPENROUTER_API_KEY=sua-chave-aqui
+```
+
+Os nomes de modelo levam o prefixo do provedor de origem, por exemplo
+`openai/o4-mini` ou `deepseek/deepseek-chat`.
+
+### Opção B: API da própria OpenAI
+
+Se preferir usar a OpenAI diretamente:
 
 ```bash
 export OPENAI_API_KEY=sk-sua-chave-aqui
 ```
 
-Isso vale para a OpenAI e para serviços compatíveis (OpenRouter, Maritaca), ajustando
-a `base_url` no cliente se precisar.
+Nesse caso, rode com `--provedor openai` e um nome de modelo sem prefixo (ex.: `o4-mini`).
 
-### Opção B: modelo local com Ollama (sem custo)
+### Opção C: modelo local com Ollama (sem custo)
 
 Instale o Ollama (https://ollama.com), baixe um modelo e deixe o servidor no ar:
 
@@ -56,10 +68,13 @@ manda dados para fora.
 ## Passo 3: rodar a demonstração
 
 ```bash
-# Opção A (API):
-python exemplo_cora.py --n 5 --modelo o4-mini
+# Opção A (OpenRouter, padrão):
+python exemplo_cora.py --n 5 --modelo openai/o4-mini
 
-# Opção B (local):
+# Opção B (OpenAI):
+python exemplo_cora.py --n 5 --provedor openai --modelo o4-mini
+
+# Opção C (local):
 python exemplo_cora.py --n 5 --provedor ollama --modelo qwen2.5:14b
 ```
 
@@ -85,8 +100,8 @@ Para ver só o resultado, sem o passo a passo, use `--silencioso`.
 |-----------|--------|----------------|
 | `--n` | 5 | quantos nós classificar |
 | `--seed` | 42 | semente do sorteio (reprodutível) |
-| `--provedor` | openai | `openai` ou `ollama` |
-| `--modelo` | o4-mini | nome do modelo |
+| `--provedor` | openrouter | `openrouter`, `openai` ou `ollama` |
+| `--modelo` | openai/o4-mini | nome do modelo (com prefixo no OpenRouter) |
 | `--max-passos` | 15 | limite de rodadas antes de forçar resposta |
 | `--silencioso` | desligado | esconde o raciocínio passo a passo |
 
@@ -96,7 +111,8 @@ Para ver só o resultado, sem o passo a passo, use `--silencioso`.
 
 | Sintoma | Causa provável | Solução |
 |---------|----------------|---------|
-| `KeyError: 'OPENAI_API_KEY'` | chave não definida | rode o `export` do passo 2 |
+| `KeyError: 'OPENROUTER_API_KEY'` | chave não definida | rode o `export` do passo 2 |
+| `KeyError: 'OPENAI_API_KEY'` | usou `--provedor openai` sem a chave | defina `OPENAI_API_KEY` |
 | erro de conexão com o Ollama | servidor não está no ar | rode `ollama serve` |
 | acurácia baixa com poucos nós | amostra pequena | aumente `--n` (a acurácia estabiliza) |
 | muito lento no Ollama | modelo grande em CPU | use um modelo menor (ex.: `llama3.1:8b`) |

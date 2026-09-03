@@ -43,7 +43,7 @@ Se você é aluno de graduação e nunca viu isso, siga nesta ordem:
 3. [`docs/03-reproduzir-do-zero.md`](docs/03-reproduzir-do-zero.md): rode você mesmo, do zero.
 4. [`docs/04-genealogia-do-metodo.md`](docs/04-genealogia-do-metodo.md): de onde o método veio (CoT, PAL, ReAct, CodeGraph).
 
-Para trocar de provedor de LLM (OpenAI, Ollama e outros), veja
+Para trocar de provedor de LLM (OpenRouter, OpenAI, Ollama), veja
 [`docs/05-usando-as-apis.md`](docs/05-usando-as-apis.md).
 
 Os slides em [`slides/graph-as-code-slides.pdf`](slides/graph-as-code-slides.pdf) cobrem
@@ -60,16 +60,22 @@ pip install -r requirements.txt
 # configure a chave do provedor (copie o modelo e preencha):
 cp .env.example .env
 
-# Opção A: com API compatível com OpenAI
-export OPENAI_API_KEY=sk-...
-python exemplo_cora.py --n 5 --modelo o4-mini
+# Opção A: provedor padrão do projeto, OpenRouter
+export OPENROUTER_API_KEY=...
+python exemplo_cora.py --n 5 --modelo openai/o4-mini
 
-# Opção B: 100% local e sem custo, via Ollama
+# Opção B: com a API da própria OpenAI
+export OPENAI_API_KEY=sk-...
+python exemplo_cora.py --n 5 --provedor openai --modelo o4-mini
+
+# Opção C: 100% local e sem custo, via Ollama
 python exemplo_cora.py --n 5 --provedor ollama --modelo qwen2.5:14b
 ```
 
-Você verá, para cada nó, o raciocínio do LLM e cada expressão de código que ele gera,
-terminando na classe prevista. Detalhes em [`docs/03-reproduzir-do-zero.md`](docs/03-reproduzir-do-zero.md).
+Este projeto usa o **OpenRouter** por padrão: uma API compatível com a da OpenAI que dá
+acesso a vários modelos (o4-mini, DeepSeek, Qwen, Llama) com uma única chave. Você verá,
+para cada nó, o raciocínio do LLM e cada expressão de código que ele gera, terminando na
+classe prevista. Detalhes em [`docs/03-reproduzir-do-zero.md`](docs/03-reproduzir-do-zero.md).
 
 ---
 
