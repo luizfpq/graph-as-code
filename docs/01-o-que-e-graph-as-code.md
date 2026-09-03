@@ -87,5 +87,4 @@ O LLM decide **o que** investigar (a parte criativa). O Python garante que a res
 
 ## Próximo passo
 
-Agora que você tem a intuição, veja o mecanismo detalhado com um exemplo real em
 [`02-como-funciona-passo-a-passo.md`](02-como-funciona-passo-a-passo.md).
