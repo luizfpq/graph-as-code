@@ -104,7 +104,7 @@ significância estão em [`../resultados/reproducao-o4mini.md`](../resultados/re
 | Argumento | Padrão | Para que serve |
 |-----------|--------|----------------|
 | `--n` | 5 | quantos nós classificar |
-| `--seed` | 42 | semente do sorteio (reprodutível) |
+| `--seed` | 42 | seed do sorteio (reprodutível) |
 | `--provedor` | openrouter | `openrouter`, `openai` ou `ollama` |
 | `--modelo` | openai/o4-mini | nome do modelo (com prefixo no OpenRouter) |
 | `--max-passos` | 15 | limite de rodadas antes de forçar resposta |
@@ -127,7 +127,7 @@ significância estão em [`../resultados/reproducao-o4mini.md`](../resultados/re
 ## Quer números sérios?
 
 A demonstração com poucos nós serve para ver o mecanismo. Para uma reprodução com
-significância estatística (100 nós, várias sementes), veja
+significância estatística (100 nós, várias seeds), veja
 [`../resultados/reproducao-o4mini.md`](../resultados/reproducao-o4mini.md).
 
 ---
