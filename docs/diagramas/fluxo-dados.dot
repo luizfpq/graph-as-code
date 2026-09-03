@@ -1,0 +1,62 @@
+// Graph-as-Code: como os dados andam entre o LLM e o Python.
+// Renderize com:  dot -Tpng fluxo-dados.dot -o fluxo-dados.png
+
+digraph fluxo_dados {
+    rankdir=TB;
+    fontname="Helvetica";
+    node [fontname="Helvetica", fontsize=11];
+    edge [fontname="Helvetica", fontsize=9];
+
+    subgraph cluster_llm {
+        label="LLM (modelo de linguagem)";
+        style=dashed;
+        color="#2196F3";
+        fontcolor="#2196F3";
+        llm_pensa [label="Raciocina sobre\no estado atual", shape=box, style=rounded];
+        llm_codigo [label="Gera expressao\npandas (1 linha)", shape=box, style=rounded];
+        llm_resposta [label="Emite\nAnswer [class_id]", shape=box, style="rounded,bold"];
+    }
+
+    subgraph cluster_python {
+        label="Python local (sandbox seguro)";
+        style=dashed;
+        color="#4CAF50";
+        fontcolor="#4CAF50";
+        executor [label="ExecutorSeguro\n(valida AST + tempo limite)", shape=box, style=rounded];
+        df [label="DataFrame\n(id, features,\nneighbors, label)", shape=cylinder];
+    }
+
+    subgraph cluster_orquestrador {
+        label="Classificador (graph_as_code.py)";
+        style=dashed;
+        color="#FF9800";
+        fontcolor="#FF9800";
+        init [label="Monta o prompt de sistema\n+ 'classifique o no X'", shape=box, style=rounded];
+        roteador [label="Analisa a resposta:\ncodigo? resposta? erro?", shape=diamond];
+        anexa [label="Anexa o resultado\nao dialogo", shape=box, style=rounded];
+        forca [label="Forca a resposta\n(limite de passos atingido)", shape=box, style=rounded];
+    }
+
+    init -> llm_pensa [label="dialogo"];
+    llm_pensa -> llm_codigo [label="raciocinio + codigo"];
+    llm_pensa -> llm_resposta [label="confiante o suficiente"];
+
+    llm_codigo -> roteador [label="resposta (texto + codigo)"];
+    llm_resposta -> roteador [label="resposta final"];
+
+    roteador -> executor [label="codigo extraido\n(extrair_codigo)"];
+    roteador -> anexa [label="classe extraida\n(extrair_resposta)", style=dashed];
+
+    executor -> df [label="avalia a expressao", dir=both];
+    executor -> anexa [label="(sucesso, texto)"];
+
+    anexa -> llm_pensa [label="dialogo + 'Result: ...'"];
+
+    roteador -> forca [label="passo == limite\nsem resposta"];
+    forca -> llm_resposta [label="'voce DEVE responder agora'"];
+
+    llm_resposta -> fim [label="predicao"];
+    fim [label="Retorna:\n{no, predicao,\npassos, tokens, latencia}", shape=box, style="rounded,filled", fillcolor="#E8F5E9"];
+
+    nota [label="O Python roda LOCAL, no mesmo\nprocesso que chama o LLM.\n\nO LLM NAO executa codigo: ele\ngera texto que se parece com\ncodigo. Quem executa e o\nExecutorSeguro, aqui na maquina.", shape=note, style=filled, fillcolor="#FFF9C4", fontsize=10];
+}

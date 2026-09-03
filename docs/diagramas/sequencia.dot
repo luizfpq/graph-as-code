@@ -1,0 +1,38 @@
+// Diagrama de sequencia: quem fala com quem, em cada passo.
+// Leitura da esquerda para a direita segue a ordem temporal.
+// Renderize com:  dot -Tpng sequencia.dot -o sequencia.png
+
+digraph sequencia {
+    rankdir=LR;
+    fontname="Helvetica";
+    node [fontname="Helvetica", fontsize=10, shape=record];
+    edge [fontname="Helvetica", fontsize=9];
+
+    classificador [label="{Classificador|graph_as_code.py}"];
+    llm [label="{LLM|modelo de linguagem}"];
+    executor [label="{ExecutorSeguro|Python local}"];
+    dados [label="{DataFrame|grafo em memoria}"];
+
+    // Passo 0: inicializacao
+    classificador -> llm [label="1. prompt de sistema + 'classifique o no 133'"];
+
+    // Passo 1: consulta o texto do no
+    llm -> classificador [label="2. raciocinio + df.loc[133, 'features']"];
+    classificador -> executor [label="3. envia o codigo extraido"];
+    executor -> dados [label="4. avalia sobre o DataFrame"];
+    dados -> executor [label="5. retorna o texto do no"];
+    executor -> classificador [label="6. (sucesso, texto)"];
+    classificador -> llm [label="7. 'Result: ...'"];
+
+    // Passo 2: consulta os rotulos dos vizinhos
+    llm -> classificador [label="8. raciocinio + value_counts() dos vizinhos"];
+    classificador -> executor [label="9. envia o codigo"];
+    executor -> dados [label="10. avalia"];
+    dados -> executor [label="11. retorna a contagem por classe"];
+    executor -> classificador [label="12. (sucesso, texto)"];
+    classificador -> llm [label="13. 'Result: {5: 4, 1: 1}'"];
+
+    // Passo 3: resposta final
+    llm -> classificador [label="14. 'a maioria e classe 5. Answer 5'"];
+    classificador -> classificador [label="15. extrair_resposta() = 5\nretorna o resultado final"];
+}

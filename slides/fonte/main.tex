@@ -1,0 +1,579 @@
+\documentclass{beamer}
+\usepackage{amsfonts,amsmath}
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{ragged2e}
+\usepackage[normalem]{ulem}
+
+\DeclareUnicodeCharacter{200B}{}
+\usetheme{ufms}
+\addtobeamertemplate{frame begin}{}{\justifying}
+
+\usefonttheme[onlymath]{serif}
+
+% Remover slides automaticos de sumario
+\makeatletter
+\let\beamer@writeslidentry@miniframeson=\beamer@writeslidentry
+\def\beamer@writeslidentry@miniframesoff{\expandafter\beamer@ifempty\expandafter{\beamer@framestartpage}{}{\addtocontents{nav}{\protect\headcommand{\protect\beamer@partpages{\the\c@page}{\the\c@page}}}}}
+\makeatother
+\AtBeginSection[]{}
+
+\titlebackground*{assets/background}
+
+\newcommand{\hrefcol}[2]{\textcolor{cyan}{\href{#1}{#2}}}
+
+\title{Graph-as-Code}
+\subtitle{Origem, método e validações}
+\course{PPGCC - FACOM/UFMS}
+\author{\href{mailto:luiz.quirino@ufms.br}{Luiz F. P. \textbf{Quirino}}}
+\IDnumber{}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{}
+  \vspace{2em}
+  \begin{center}
+    \large
+    Esta apresentação é baseada no artigo\\[0.5em]
+    \textbf{``Actions Speak Louder than Prompts''}\\[0.3em]
+    \normalsize
+    Finkelshtein, Cucerzan, Jauhar \& White\\[0.3em]
+    \emph{ICLR 2026}
+  \end{center}
+
+  \vspace{1.5em}
+  \begin{center}
+    \normalsize
+    Os exemplos, dados e resultados apresentados aqui seguem\\
+    o texto original. A narrativa foi reorganizada para fins didáticos.
+  \end{center}
+\end{frame}
+
+
+% ============================================================
+% 1. MOTIVACAO (2 frames)
+% ============================================================
+\section{Motivação}
+\begin{frame}{O cenário}
+  \textbf{LLMs se tornaram solucionadores de propósito geral.}\\
+  {\small Com escala, modelos de linguagem adquirem capacidades que ninguém programou: raciocínio em cadeia, geração de código, uso de ferramentas. Funciona muito bem em texto puro.}
+
+  \vspace{1em}
+  \textbf{Grafos textuais são a fronteira natural.}\\
+  {\small Redes sociais, citações, e-commerce --- entidades conectadas onde cada nó carrega texto. Se o LLM entende texto e o grafo codifica relações, combinar os dois promete classificação sem treino.}
+
+  \vspace{1em}
+  \textbf{O desafio: classificar com poucos rótulos.}\\
+  {\small Rotular nós em grafos é caro. O cenário real é ter 5--10\% de labels e precisar classificar o restante. LLMs raciocinam zero-shot --- podem resolver isso?}
+\end{frame}
+
+\begin{frame}{O problema}
+
+  \vspace{2em}
+  \begin{block}{Síntese da pergunta central (Finkelshtein et al., ICLR 2026)}
+    \emph{``Qual a melhor forma de um LLM interagir com dados de grafos?''}
+  \end{block}
+
+  \vspace{1.5em}
+  \begin{center}
+    \small
+    O artigo testa 3 paradigmas de interação e apresenta que\\
+    \textbf{deixar o LLM explorar o grafo gerando código} supera os demais.
+  \end{center}
+\end{frame}
+% ============================================================
+% 2. GENEALOGIA (6 frames)
+% ============================================================
+\section{Genealogia}
+\begin{frame}{O ponto de partida}
+  LLMs são bons em linguagem natural, mas ruins em:
+  \begin{itemize}
+    \item Cálculos (erram contas simples)
+    \item Raciocínio em múltiplos passos (degradam com a profundidade)
+    \item Dados estruturados (grafos, tabelas)
+  \end{itemize}
+
+ \vspace{2em}
+  \begin{block}{Exemplo}
+    \emph{``quantos vizinhos do nó 133 são classe 5?''}
+  \end{block}
+
+  \vspace{0.5em}
+  Sabe-se que o LLM pode contar errado.
+  A solução surgiu em etapas. Cada uma resolve a limitação da anterior.
+\end{frame}
+
+\begin{frame}[fragile]{2022: Chain-of-Thought -- CoT (Wei et al., NeurIPS)}
+  \textbf{Insight:} se o LLM explicita o raciocínio passo a passo, erra menos.
+
+  \vspace{0.5em}
+  \textbf{Sem CoT:}
+  \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+User:    Classe do no 133?
+LLM:     Classe 3.                              (errado)
+  \end{lstlisting}
+
+  \vspace{0.3em}
+  \textbf{Com CoT:}
+  \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+User:    Classe do no 133?
+LLM:     O titulo menciona Reinforcement Learning.
+         4 dos 5 vizinhos pertencem a classe 5.
+         Logo, classe 5.                        (correto)
+  \end{lstlisting}
+
+  \vspace{0.5em}
+  \textbf{Limitação:} aritmética por inferência falha em problemas complexos.
+\end{frame}
+
+\begin{frame}[fragile]{2023: PAL -- Program-Aided Language Models (Gao et al., ICML)}
+  \textbf{Insight:} em vez de raciocinar sobre números, gerar código que calcula.
+
+  \vspace{0.3em}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\scriptsize]
+neighbors_labels = [5, 5, 5, 5, 1]
+most_common = Counter(neighbors_labels).most_common(1)[0][0]
+  \end{lstlisting}
+
+  \vspace{0.3em}
+  O LLM traduz o problema em programa. Python executa e retorna \texttt{5}.
+
+  \vspace{0.5em}
+  \textbf{Limitação:} o LLM precisa receber \emph{todos os dados} no prompt para gerar o código. Grafo grande estoura a janela de contexto.
+\end{frame}
+
+\begin{frame}[fragile]{2023: ReAct -- Reasoning + Acting (Yao et al., ICLR)}
+  \textbf{Insight:} buscar dados sob demanda, agindo iterativamente.
+
+  \vspace{0.3em}
+  \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+Thought:  Preciso dos vizinhos do no 133.
+Action:   get_neighbors(133)  ->  [134, 135, 707, 2048]
+
+Thought:  Preciso do label de cada vizinho.
+Action:   get_label(134)  ->  5
+Action:   get_label(135)  ->  5
+Action:   get_label(707)  ->  5
+Action:   get_label(2048) ->  1
+
+Thought:  Maioria classe 5.  Answer: 5
+  \end{lstlisting}
+
+  \vspace{0.3em}
+  \textbf{Limitação:} 6 chamadas atômicas para uma contagem simples. Lento e \textit{relativamente} caro.
+\end{frame}
+
+\begin{frame}[fragile]{2024: CodeGraph (Cai et al., arXiv)}
+  \textbf{Insight:} e se o LLM gerasse código para resolver problemas sobre grafos?
+
+  \vspace{0.3em}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\scriptsize]
+def count_edges(adj_list):
+    return sum(len(v) for v in adj_list.values()) // 2
+
+count_edges(graph)
+  \end{lstlisting}
+
+  \vspace{0.3em}
+  O LLM aprende com exemplos (few-shot), gera programas e executa via interpretador. Evita erros aritméticos e torna o raciocínio auditável.
+
+  \vspace{0.5em}
+  \textbf{Resultados:} melhoria de 1.3\% a 58.6\% em tarefas de raciocínio sobre grafos (GraphQA), dependendo da tarefa.
+
+  \vspace{0.5em}
+  \textbf{Limitação:} prova de conceito. Poucos datasets, sem comparação com outros paradigmas (Prompting, Tool-use), sem validação em escala.
+\end{frame}
+
+\begin{frame}{Genealogia \xout{completa} Lógica}
+  \begin{center}
+    \footnotesize
+    \begin{tabular}{rcp{7.5cm}}
+      \textbf{2022} & $\bullet$ & \textbf{Chain-of-Thought}: pensa passo a passo \\
+      & $|$ & \emph{Limitação: cálculos de cabeça erram} \\[0.4em]
+      \textbf{2023} & $\bullet$ & \textbf{PAL}: delega cálculos para código \\
+      & $|$ & \emph{Limitação: precisa de todos os dados antecipadamente} \\[0.4em]
+      \textbf{2023} & $\bullet$ & \textbf{ReAct}: busca dados iterativamente \\
+      & $|$ & \emph{Limitação: ações atômicas, sem composição} \\[0.4em]
+      \textbf{2024} & $\bullet$ & \textbf{CodeGraph}: código + grafos (prova de conceito) \\
+      & $|$ & \emph{Limitação: poucos datasets, sem validação} \\[0.4em]
+      \textbf{2026} & $\bullet$ & \textbf{Graph-as-Code}: síntese validada em escala \\
+      & & 14 datasets $\cdot$ múltiplos modelos $\cdot$ node classification \\
+    \end{tabular}
+  \end{center}
+
+  \vspace{0.5em}
+  Cada passo resolve a limitação do anterior. Graph-as-Code (GaC) é a convergência natural.
+\end{frame}
+
+\begin{frame}[fragile]{2026: Graph-as-Code (Finkelshtein et al., ICLR)}
+  \textbf{Síntese:} código (PAL) + iteração (ReAct) + grafos.
+
+  \vspace{0.3em}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\scriptsize]
+df.loc[133, 'features']
+df.loc[df.loc[133, 'neighbors'], 'label'].value_counts()
+  \end{lstlisting}
+
+  \vspace{0.3em}
+  Passo 1: consulta o texto do nó alvo.\\
+  Passo 2: conta os labels dos vizinhos numa expressão só.\\
+  Passo 3: LLM combina os sinais e decide.
+
+  \vspace{0.5em}
+  \textbf{2 expressões} fazem o que ReAct levou 6 chamadas.\\
+  A diferença com CodeGraph: GaC é \textbf{iterativo com feedback}. Cada expressão é informada pelo resultado da anterior. CodeGraph gera programa inteiro de uma vez sem ver resultados intermediários.\\
+  Incorpora e estende a ideia do CodeGraph (Cai et al., 2024).
+\end{frame}
+
+
+
+% ============================================================
+% 3. COMO FUNCIONA (2 frames)
+% ============================================================
+\section{Como funciona}
+\begin{frame}{A ideia central}
+  \textbf{O grafo inteiro vira uma tabela. (DataFrame)} Cada linha é um nó:
+
+  \vspace{0.3em}
+  \begin{table}
+    \centering
+    \footnotesize
+    \begin{tabular}{clcl}
+      \toprule
+      \texttt{id} & \texttt{features} (o texto) & \texttt{label} (a classe) & \texttt{neighbors} (conexões) \\
+      \midrule
+      133 & ``A Reinforcement Learning...''  & \textbf{?} & [134, 135, 707, 2048] \\
+      134 & ``Q-Learning for Robot...''      & 5   & [133, 135] \\
+      135 & ``Policy Gradient Methods...''   & 5   & [133, 134, 707] \\
+      707 & ``Temporal Difference...''       & 5   & [133, 135] \\
+      2048 & ``Image Segmentation...''       & 1   & [133] \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.5em}
+  {\small
+  \textbf{Um nó:} um artigo, 3 atributos: features, neighbors, label.
+
+  \vspace{0.2em}
+  \textbf{Uma aresta:} citação entre artigos.
+
+  \vspace{0.2em}
+  \textbf{Labels visíveis:} poucos revelados como referência. O 133 é o alvo.
+  }
+\end{frame}
+
+\begin{frame}{O mecanismo: perguntar, receber, decidir}
+
+  O LLM funciona como um investigador com acesso a um terminal:
+
+  \vspace{0.5em}
+  \begin{center}
+    \large
+    \texttt{LLM pergunta $\rightarrow$ Python responde $\rightarrow$ LLM pergunta $\rightarrow$ ... $\rightarrow$ decide}
+  \end{center}
+
+  \vspace{0.5em}
+  \begin{enumerate}
+    \item LLM recebe: ``classifique o nó 133'' + estrutura da tabela
+    \item Gera uma pergunta em forma de código (expressão pandas)
+    \item Python executa e devolve a resposta como texto
+    \item LLM lê a resposta, decide se precisa de mais informação
+    \item Quando confiante: emite a classe final
+  \end{enumerate}
+
+  \vspace{0.5em}
+  \textbf{Por que funciona:} o LLM escolhe \emph{o que} investigar (criatividade).\\
+  Python garante que a resposta é exata (execução). Código gerado = explicação auditável.
+\end{frame}
+
+
+% ============================================================
+% 4. EXEMPLO (2 frames)
+% ============================================================
+
+\begin{frame}[fragile]{Exemplo: classificando o nó 133, passo a passo}
+
+  \textbf{Step 1 --- ``Sobre o que é este nó?''}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\scriptsize]
+df.loc[133, 'features']
+  \end{lstlisting}
+  \vspace{0.1em}
+  $\rightarrow$ \texttt{"A Reinforcement Learning Approach to Job-Shop Scheduling"}
+
+  \vspace{0.5em}
+  \emph{O LLM agora sabe: o texto fala de Reinforcement Learning.}
+
+  \vspace{0.8em}
+  \textbf{Step 2 --- ``O que os vizinhos dizem?''}
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\scriptsize]
+df.loc[df.loc[133, 'neighbors'], 'label'].value_counts()
+  \end{lstlisting}
+  \vspace{0.1em}
+  $\rightarrow$ \texttt{\{5: 4, 1: 1\}} \quad (4 vizinhos são classe 5, 1 é classe 1)
+
+  \vspace{0.5em}
+  \emph{O LLM agora sabe: a vizinhança confirma --- maioria é classe 5.}
+\end{frame}
+
+\begin{frame}{Exemplo: classificando o nó 133, passo a passo}
+  \framesubtitle{Step 3 --- decidir}
+
+  O LLM combina os dois sinais:
+
+  \vspace{0.5em}
+  \begin{enumerate}
+    \item \textbf{Texto} sugere Reinforcement Learning $\rightarrow$ hipótese: classe 5
+    \item \textbf{Vizinhança} confirma: 4 de 5 vizinhos são classe 5
+    \item Sinais convergem $\rightarrow$ confiança alta
+  \end{enumerate}
+
+  \vspace{0.3em}
+  \begin{center}
+    \large \texttt{Answer: 5} \quad (correto!)
+  \end{center}
+
+  \vspace{0.5em}
+  \textbf{Por que isso é poderoso:}
+  \begin{itemize}
+    \item 2 perguntas bastaram, não precisou ver o grafo inteiro
+    \item Texto e estrutura se complementam (um confirma o outro)
+    \item Se o texto fosse ambíguo, a vizinhança desempataria
+    \item Se vizinhos não tivessem label, o texto sustentaria sozinho
+  \end{itemize}
+
+  \vspace{0.3em}
+  \emph{Adaptação flexível: usa o sinal mais informativo disponível.}
+\end{frame}
+
+% ============================================================
+% 5. VALIDACAO (3 frames)
+% ============================================================
+\section*{Validação}
+\begin{frame}{Validação: escopo do estudo original}
+  Finkelshtein et al. testaram em:
+  \begin{itemize}
+    \item \textbf{14 datasets}: Cora, PubMed, ArXiv, Wiki-CS, Reddit, Cornell, Texas...
+    \item \textbf{Múltiplos modelos}: o4-mini, GPT-5, DeepSeek R1, Phi-4, Qwen, Llama...
+    \item \textbf{Foco}: node classification (+ shortest path como validação complementar)
+  \end{itemize}
+
+  \vspace{0.5em}
+  \textbf{Baselines comparados:}
+  \begin{table}
+    \centering
+    \footnotesize
+    \begin{tabular}{ll}
+      \toprule
+      Categoria & Métodos \\
+      \midrule
+      GNNs supervisionadas & GCN, GAT, GraphSAGE (SOTA -- State of the Art) \\
+      Semi-supervisionado & Label Propagation \\
+      LLM zero-shot & Prompting, Tool-use, \textbf{Graph-as-Code} \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Resultados: eficiência de tokens}
+  \textbf{Consumo de tokens por nó} (datasets de texto longo, Tabela 6 do paper):
+  \begin{table}
+    \centering
+    \footnotesize
+    \begin{tabular}{lrrr}
+      \toprule
+      Dataset & Prompting 2-hop & GraphTool & \textbf{GaC} \\
+      \midrule
+      Reddit & 42.100 & 16.100 & \textbf{14.900} \\
+      Photo & 104.700 & 43.300 & \textbf{41.500} \\
+      Wiki-CS & 1.157.000 (estoura) & 61.700 & \textbf{57.100} \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.5em}
+  \textbf{Achado principal:} GaC usa 20$\times$ menos tokens que Prompting 2-hop em Wiki-CS. Em grafos densos, Prompting simplesmente nao cabe no contexto.
+
+  \vspace{0.3em}
+  {\footnotesize Nota: os resultados de accuracy variam por dataset e modelo. O paper reporta resultados especificos por combinacao, nao faixas gerais. Consultar Tabelas 2--5 do artigo para numeros exatos.}
+\end{frame}
+
+\begin{frame}{Ablação e achados principais}
+  Finkelshtein remove componentes para medir a contribuição de cada sinal:
+
+  \vspace{0.3em}
+  \begin{itemize}
+    \item Truncar texto: Prompting piora. \textbf{GaC compensa com estrutura.}
+    \item Remover arestas: Prompting piora. \textbf{GaC compensa com texto.}
+    \item Esconder labels: ambos pioram, mas GaC degrada menos.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Ablação e achados principais}
+
+  \vspace{0.3em}
+  {\small Tradução direta da introdução do artigo (Finkelshtein et al., ICLR 2026):}
+
+  \vspace{0.5em}
+  \begin{quote}
+    \textbf{Achados.} Nossa avaliação produz percepções e diretrizes-chave para a aplicação de LLMs a dados de grafo:
+
+    \vspace{0.3em}
+    \begin{itemize}
+      \item Graph-as-Code alcança o melhor desempenho geral, com ganhos especialmente grandes em \textbf{grafos de texto longo ou de alto grau}, onde o prompting rapidamente esgota o orçamento de tokens.
+
+      \vspace{0.3em}
+      \item Todos os modos de interação LLM--grafo são eficazes em \textbf{grafos heterofílicos}, desafiando a suposição comum de que eles colapsam sob baixa homofilia.
+
+      \vspace{0.3em}
+      \item Graph-as-Code é capaz de \textbf{deslocar flexivelmente} sua dependência entre estrutura, features ou rótulos, aproveitando o tipo de entrada mais informativo.
+    \end{itemize}
+  \end{quote}
+\end{frame}
+
+% ============================================================
+% 6. POR QUE FUNCIONA + SHORTEST PATH (2 frames)
+% ============================================================
+
+\begin{frame}{Por que Graph-as-Code funciona}
+  Três razões técnicas:
+
+  \vspace{0.3em}
+  \begin{enumerate}
+    \item \textbf{Eficiência de tokens} --- consulta sob demanda, não serializa tudo\\
+      {\footnotesize 57k tokens (GaC) vs. 1.157k (Prompting) no Wiki-CS}
+
+    \vspace{0.3em}
+    \item \textbf{Composicionalidade} --- operações complexas em 1 expressão\\
+      {\footnotesize \texttt{.value\_counts()} = buscar + filtrar + contar}
+
+    \vspace{0.3em}
+    \item \textbf{Precisão algorítmica} --- código executa, não ``pensa''\\
+      {\footnotesize MSE (Mean Squared Error) = 0.0 em shortest path (próximo slide)}
+  \end{enumerate}
+
+  \vspace{0.5em}
+  \textbf{Adaptação flexível (Achado 9):} quando o texto é enganoso, GaC desloca para sinais estruturais sem reconfiguração.
+\end{frame}
+
+\begin{frame}[fragile]{Precisão algorítmica: shortest path}
+  Tarefa: distância mínima entre dois nós.
+
+  \vspace{0.3em}
+  \textbf{Prompting/Tool-use:} LLM conta saltos de cabeça e erra em grafos grandes.
+
+  \vspace{0.2em}
+  \textbf{Graph-as-Code:} LLM gera código que resolve exatamente:
+  \begin{lstlisting}[language=Python, basicstyle=\ttfamily\scriptsize]
+G = nx.from_pandas_edgelist(
+    df.explode('neighbors'), source='id', target='neighbors')
+nx.shortest_path_length(G, source=42, target=133)
+  \end{lstlisting}
+
+  \vspace{0.3em}
+  Resultado: MSE = 0.0 (erro zero) para GaC.
+
+  \vspace{0.3em}
+  \textbf{Princípio:} LLM decide \emph{o que} calcular (criatividade).\\
+  Python garante que o cálculo é correto (execução).
+\end{frame}
+
+% ============================================================
+% 7. COMPARACAO GNNs (1 frame)
+% ============================================================
+\section*{GaC vs GNNs}
+\begin{frame}{GaC vs. GNNs (Graph Neural Networks) supervisionadas}
+  \begin{table}
+    \centering
+    \footnotesize
+    \begin{tabular}{p{2.8cm}p{4.5cm}p{4.5cm}}
+      \toprule
+      & \textbf{GNNs (GCN, GAT...)} & \textbf{Graph-as-Code} \\
+      \midrule
+      Treino & GPU + milhares de exemplos & Zero-shot (LLM congelado) \\
+      Accuracy & Geralmente maior (SOTA) & Menor (trade-off por flexibilidade) \\
+      Poucos rótulos & Sofre & Funciona (10\% basta) \\
+      Explicabilidade & Caixa-preta & Código = explicação \\
+      Novo domínio & Retreinar & Funciona direto \\
+      Latência & ms & s--min por nó \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.3em}
+  GaC não substitui GNNs. É alternativa para cenários com poucos rótulos, poucos recursos, ou necessidade de explicabilidade.
+\end{frame}
+
+% ============================================================
+% 8. LIMITACOES (1 frame)
+% ============================================================
+\section*{Limitações}
+\begin{frame}{Limitações e fronteiras}
+  \textbf{GaC não tem vantagem quando:}
+  \begin{itemize}
+    \item Grafo esparso (vizinhança cabe no prompt)
+    \item Nós isolados (sem vizinhança para explorar)
+    \item Latência importa (40--160s por nó)
+    \item Todos os labels disponíveis (GNNs dominam)
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Limitações e fronteiras}
+
+  \vspace{0.5em}
+  \textbf{GaC é a melhor opção quando:}
+  \begin{itemize}
+    \item Grafo denso + poucos rótulos + texto longo
+    \item Explicabilidade necessária (código auditável)
+    \item Novo domínio/idioma sem dados de treino
+    \item Custo importa
+  \end{itemize}
+
+  % \vspace{0.5em}
+  % \textbf{Custo:} 50 nós $\approx$ \$0.30--\$2 (API) ou R\$0 (Ollama local).
+\end{frame}
+
+% ============================================================
+% 9. RESUMO + REFERENCIAS (2 frames)
+% ============================================================
+\section*{Conclusão}
+\begin{frame}{Resumo}
+  \begin{center}
+    \large
+    \emph{Em vez de descrever o grafo inteiro para o LLM,\\
+    deixamos ele explorar por conta própria, gerando código.}
+  \end{center}
+
+  \vspace{1em}
+  \begin{enumerate}
+    \item Grafo representado como DataFrame pandas
+    \item LLM gera expressões para explorar vizinhança sob demanda
+    \item Executor seguro avalia e devolve resultado
+    \item LLM itera até decidir
+  \end{enumerate}
+
+  \vspace{0.5em}
+  Funciona onde Prompting estoura (grafos densos) e Tool-use é lento (ações atômicas).
+\end{frame}
+
+\begin{frame}{Referências}
+  \footnotesize
+  \begin{itemize}
+    \item Finkelshtein et al. (2026). ``Actions Speak Louder than Prompts''. ICLR.
+    \item Gao et al. (2023). ``PAL: Program-Aided Language Models''. ICML.
+    \item Yao et al. (2023). ``ReAct: Synergizing Reasoning and Acting in LLMs''. ICLR.
+    \item Cai et al. (2024). ``CodeGraph: Enhancing Graph Reasoning of LLMs with Code''. arXiv:2408.13863.
+    \item Wei et al. (2022). ``Chain-of-Thought Prompting Elicits Reasoning in LLMs''. NeurIPS.
+    \item Wei et al. (2022). ``Emergent Abilities of Large Language Models''. TMLR.
+  \end{itemize}
+\end{frame}
+
+\backmatter
+\end{document}

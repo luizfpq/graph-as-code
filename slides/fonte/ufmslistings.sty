@@ -1,0 +1,25 @@
+\ProvidesPackage{ufmslistings}
+\RequirePackage{listings}
+
+\lstdefinestyle{moderno}{
+    backgroundcolor=\color{ufmsgrey!20},   
+    commentstyle=\color{green!50!black}\itshape,
+    keywordstyle=\color{ufmsazul}\bfseries,
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{purple},
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,                 
+    numbers=left,                    
+    frame=single,
+    rulecolor=\color{ufmsazul!30},
+    tabsize=2,
+}
+
+% Adicionando suporte a Assembly como você pediu antes
+\lstdefinelanguage{asm_ufms}{
+    morekeywords={mov, add, sub, mul, div, jmp, jne, je, ret, push, pop, int, call},
+    morecomment=[l]{;},
+    morestring=[b]",
+}
+
+\lstset{style=moderno}
