@@ -77,6 +77,15 @@ acesso a vários modelos (o4-mini, DeepSeek, Qwen, Llama) com uma única chave. 
 para cada nó, o raciocínio do LLM e cada expressão de código que ele gera, terminando na
 classe prevista. Detalhes em [`docs/03-reproduzir-do-zero.md`](docs/03-reproduzir-do-zero.md).
 
+Uma ressalva importante: o OpenRouter é o padrão aqui **pela praticidade de validar o
+código** (uma única chave, vários modelos), não por rigor experimental. Ele pode
+encaminhar a mesma requisição para provedores ou instâncias diferentes do mesmo modelo,
+com pequenas diferenças de tokenização, quantização ou versão. Por isso, mesmo com
+temperatura 0 e semente fixa, **pequenas variações percentuais nos resultados são
+esperadas e documentadas**. Para medições que exijam reprodutibilidade estrita, fixe o
+provedor (rode direto na OpenAI com `--provedor openai`, ou local com Ollama) em vez de
+depender do roteamento do OpenRouter.
+
 ---
 
 ## Estrutura do repositório

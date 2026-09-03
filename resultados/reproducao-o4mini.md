@@ -37,6 +37,23 @@ densos, é a diferença entre caber e não caber no contexto do modelo.
 
 ---
 
+## Sobre a variância dos números
+
+Mesmo com temperatura 0 e semente fixa, rodar de novo pode dar percentuais um pouco
+diferentes. Isso é esperado e tem duas causas principais:
+
+- **Roteamento do provedor.** O OpenRouter (padrão do projeto) pode encaminhar a mesma
+  requisição para provedores ou instâncias diferentes do mesmo modelo, com pequenas
+  diferenças de tokenização, quantização ou versão. Determinismo estrito exigiria fixar
+  o provedor (OpenAI direta ou Ollama local).
+- **Tamanho da amostra.** Com poucos nós, um acerto a mais ou a menos move muito o
+  percentual. As medições acima usam 100 nós justamente para reduzir esse efeito.
+
+Portanto, tome os valores como ordem de grandeza, não como número exato. As faixas
+acima são compatíveis com o que o artigo original reporta.
+
+---
+
 ## Como reproduzir
 
 O exemplo deste repositório (`codigo/exemplo_cora.py`) roda o método sobre o Cora e é
