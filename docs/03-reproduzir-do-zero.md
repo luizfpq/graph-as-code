@@ -92,6 +92,11 @@ Para ver só o resultado, sem o passo a passo, use `--silencioso`.
 3. Para cada nó, chama o `ClassificadorGraphAsCode`, que roda o laço de investigação.
 4. Compara a predição com o gabarito e reporta a acurácia.
 
+Os dados em `dados-exemplo/` são um recorte pequeno, incluído só para mostrar como se
+monta e se consome o DataFrame. Não têm tamanho suficiente para representar cenários
+reais: a acurácia mostrada aqui é ilustrativa, não uma medida do método. Números com
+significância estão em [`../resultados/reproducao-o4mini.md`](../resultados/reproducao-o4mini.md).
+
 ---
 
 ## Argumentos disponíveis

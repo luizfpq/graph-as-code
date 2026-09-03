@@ -14,7 +14,8 @@ Este repositório reúne, num lugar só e explicado passo a passo, tudo que voc�
 para **entender e reproduzir** o método Graph-as-Code (GaC):
 
 - o código do método, num único arquivo comentado;
-- um exemplo que roda de verdade sobre o dataset Cora;
+- um exemplo que roda de verdade sobre um recorte pequeno do dataset Cora (só para
+  demonstrar o mecanismo, não para medir desempenho);
 - slides completos que contam a história do método;
 - documentação em português pensada para quem está começando (graduação).
 
@@ -100,7 +101,7 @@ graph-as-code/
 │   ├── exemplo_cora.py     demo rodável sobre o Cora
 │   ├── requirements.txt    dependências
 │   ├── .env.example        modelo de configuração das chaves de API
-│   └── dados-exemplo/      Cora já no formato do método (roda direto)
+│   └── dados-exemplo/      recorte do Cora só para a demo (didático, ver README da pasta)
 ├── slides/
 │   ├── graph-as-code-slides.pdf   apresentação completa
 │   └── fonte/                       fonte LaTeX/Beamer (tema UFMS)
