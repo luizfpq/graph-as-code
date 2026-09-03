@@ -6,7 +6,7 @@
 
 ## Protocolo
 
-- 100 nós de teste por rodada, sorteados com semente fixa.
+- 100 nós de teste por rodada, sorteados com seed fixa.
 - Rótulos de treino visíveis no DataFrame; rótulos de teste ocultos.
 - Temperatura 0 (determinístico), limite de 15 passos por nó.
 - O alvo é o número que o artigo original reporta para a mesma configuração.
@@ -15,7 +15,7 @@
 
 ## Resultados
 
-| Dataset | Semente | Acurácia | Alvo do artigo | Tokens por nó | Passos médios |
+| Dataset | Seed | Acurácia | Alvo do artigo | Tokens por nó | Passos médios |
 |---------|---------|----------|----------------|---------------|---------------|
 | ArXiv | 1 | 79% | 74,4 ± 3,0 | 4.497 | 3,2 |
 | ArXiv | 2 | 76% | 74,4 ± 3,0 | 4.358 | 3,2 |
@@ -39,7 +39,7 @@ densos, é a diferença entre caber e não caber no contexto do modelo.
 
 ## Sobre a variância dos números
 
-Mesmo com temperatura 0 e semente fixa, rodar de novo pode dar percentuais um pouco
+Mesmo com temperatura 0 e seed fixa, rodar de novo pode dar percentuais um pouco
 diferentes. Isso é esperado e tem duas causas principais:
 
 - **Roteamento do provedor.** O OpenRouter (padrão do projeto) pode encaminhar a mesma
@@ -58,5 +58,5 @@ acima são compatíveis com o que o artigo original reporta.
 
 O exemplo deste repositório (`codigo/exemplo_cora.py`) roda o método sobre o Cora e é
 suficiente para ver o mecanismo. Para uma reprodução com significância (100 nós, várias
-sementes, ArXiv incluso), estenda o exemplo variando `--n`, `--seed` e o dataset. Os
+seeds, ArXiv incluso), estenda o exemplo variando `--n`, `--seed` e o dataset. Os
 números acima usaram exatamente o mesmo método que está em `codigo/graph_as_code.py`.
