@@ -10,7 +10,7 @@
 
 ## O que é isto
 
-Este repositório reúne, num lugar só e explicado passo a passo, tudo que você precisa
+Este repositório reúne, num lugar só e explicado passo a passo, o básico que você precisa
 para **entender e reproduzir** o método Graph-as-Code (GaC):
 
 - o código do método, num único arquivo comentado;
