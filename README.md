@@ -36,7 +36,7 @@ completos estão em [`docs/diagramas/`](docs/diagramas/).
 
 ## Comece por aqui
 
-Se você é aluno de graduação e nunca viu isso, siga nesta ordem:
+Se você nunca viu isso, siga nesta ordem:
 
 1. [`docs/01-o-que-e-graph-as-code.md`](docs/01-o-que-e-graph-as-code.md): a intuição, sem código.
 2. [`docs/02-como-funciona-passo-a-passo.md`](docs/02-como-funciona-passo-a-passo.md): o mecanismo, com um exemplo real.
