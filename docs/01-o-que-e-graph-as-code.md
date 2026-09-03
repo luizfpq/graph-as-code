@@ -80,11 +80,8 @@ O LLM decide **o que** investigar (a parte criativa). O Python garante que a res
 
 ## O que Graph-as-Code NÃO é
 
-- Não é uma rede neural de grafo (GNN) treinada. Não há treino: o LLM já vem pronto
-  ("congelado") e é usado direto (zero-shot).
-- Não é mágica: é lento (segundos a minutos por nó) e não vence uma GNN bem treinada
-  quando você tem muitos rótulos. Ele brilha quando há **poucos rótulos**, **pouco
-  recurso** para treinar, ou quando você precisa de **explicabilidade**.
+- Não é uma rede neural de grafo (GNN) treinada. Não há treino: o LLM é usado direto (zero-shot) nas condições originais, sem necessidade de finetuning ou demais otimizações.
+- Não é uma bala de prata : é lento (segundos a minutos por nó) e não vence uma GNN bem treinada, quando você tem muitos rótulos. Ele brilha quando há **poucos rótulos**, **poucos recursos** para treinar, ou quando precisamos de **explicabilidade**.
 
 ---
 
