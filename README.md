@@ -3,7 +3,6 @@
 > Uma implementação didática e reprodutível do método **Graph-as-Code**: fazer um LLM
 > classificar nós de um grafo gerando código em vez de descrever o grafo inteiro no prompt.
 >
-> **Mantido por:** Luiz Fernando P. Quirino (PPGCC/FACOM/UFMS)
 > **Método original:** Finkelshtein et al. (ICLR 2026), "Actions Speak Louder than Prompts"
 
 ---
@@ -37,7 +36,7 @@ completos estão em [`docs/diagramas/`](docs/diagramas/).
 
 ## Comece por aqui
 
-Se você nunca viu isso, siga nesta ordem:
+Se você não tem familiaridade com o tema, siga nesta ordem:
 
 1. [`docs/01-o-que-e-graph-as-code.md`](docs/01-o-que-e-graph-as-code.md): a intuição, sem código.
 2. [`docs/02-como-funciona-passo-a-passo.md`](docs/02-como-funciona-passo-a-passo.md): o mecanismo, com um exemplo real.
@@ -82,7 +81,7 @@ Uma ressalva importante: o OpenRouter é o padrão aqui **pela praticidade de va
 código** (uma única chave, vários modelos), não por rigor experimental. Ele pode
 encaminhar a mesma requisição para provedores ou instâncias diferentes do mesmo modelo,
 com pequenas diferenças de tokenização, quantização ou versão. Por isso, mesmo com
-temperatura 0 e semente fixa, **pequenas variações percentuais nos resultados são
+temperatura 0 e seed fixa, **pequenas variações percentuais nos resultados são
 esperadas e documentadas**. Para medições que exijam reprodutibilidade estrita, fixe o
 provedor (rode direto na OpenAI com `--provedor openai`, ou local com Ollama) em vez de
 depender do roteamento do OpenRouter.
